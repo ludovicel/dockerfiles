@@ -1,0 +1,22 @@
+FROM debian:bullseye
+
+LABEL maintainer="Ludovic ELUECQUE <github.com/ludovicel"
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG PHP_VERSION=8.1
+
+RUN apt-get update && \
+	apt-get install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 curl libpcre3-dev dialog apt-utils && \
+	echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/sury-php.list && \
+	curl -fsSL  https://packages.sury.org/php/apt.gpg| gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg && \
+	apt update -y && \
+	apt install -y php${PHP_VERSION}-fpm && \
+	apt remove --purge -y php8.2* && \
+	apt install -y php${PHP_VERSION}-dev php${PHP_VERSION}-xml && \
+	pecl channel-update pecl.php.net && \
+	pecl install phalcon-5.0.0 && \
+	echo "extension=phalcon.so" > /etc/php/8.1/mods-available/phalcon.ini && \
+	phpenmod phalcon && \
+	php --ri phalcon && \
+	sed -i 's/listen = .*/listen = 0.0.0.0:9000/g' /etc/php/8.1/fpm/pool.d/www.conf && \
+	apt remove --purge apt-transport-https software-properties-common gnupg2 curl dialog apt-utils -y
